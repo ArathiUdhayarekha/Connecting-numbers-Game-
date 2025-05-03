@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Connect Numbers Game - Enhanced</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: linear-gradient(135deg, #a6c0fe, #f68084);
+    min-height: 100vh;
+    user-select: none;
+  }
+  h1 {
+    margin: 15px 0 5px 0;
+    font-weight: 700;
+    font-size: 2.4rem;
+    color: #272727;
+    text-shadow: 1px 1px 2px #fff5;
+  }
+  #controls {
+    margin: 0 0 10px 0;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+  label {
+    font-weight: 600;
+    color: #333;
+  }
+  select {
+    font-size: 1rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1.5px solid #777;
+  }
+  button {
+    padding: 10px 22px;
+    font-size: 1.15rem;
+    cursor: pointer;
+    background-color: #3f8efc;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px #2560e0aa;
+    transition: background-color 0.3s ease;
+  }
+  button:hover:enabled {
+    background-color: #2969dd;
+  }
+  button:disabled {
+    background-color: #8ab9fd;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  #grid {
+    display: grid;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 16px #23456733;
+    margin-top: 10px;
+    touch-action: none;
+  }
+  .cell {
+    background-color: #e1e6f9;
+    border: 2px solid #8ca1e9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4vmin;
+    font-weight: 700;
+    color: #2a2d4a;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    border-radius: 8px;
+  }
+  .cell.start {
+    background-color: #66b3ff;
+    color: white;
+    font-weight: 900;
+  }
+  .cell.highlight {
+    background-color: #a2e379;
+    color: #2a4a20;
+  }
+  #message {
+    font-size: 1.3rem;
+    margin-top: 16px;
+    color: #222;
+    min-height: 34px;
+    font-weight: 600;
+    text-shadow: 0 0 4px #a3d6ff88;
+  }
+  #scoreboard {
+    margin-top: 12px;
+    width: 100%;
+    max-width: 600px;
+    background: #fafafacc;
+    border-radius: 10px;
+    box-shadow: 0 0 12px #44444422;
+    padding: 15px 18px;
+    font-family: 'Arial', sans-serif;
+  }
+  #scoreboard h2 {
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    color: #223355;
+    text-align: center;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+  }
+  th, td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+  }
+  th {
+    background-color: #4169e1;
+    color: white;
+    letter-spacing: 0.05em;
+  }
+  tbody tr:nth-child(even) {
+    background-color: #e5ecffcc;
+  }
+  #stats {
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #334466;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    user-select: none;
+  }
+  #instructions {
+    margin-top: 20px;
+    padding: 15px 20px;
+    background-color: #d0e7ffcc;
+    border: 2px solid #7aa3cc;
+    border-radius: 12px;
+    max-width: 600px;
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: center;
+    color: #223344;
+    user-select: none;
+  }
+  #instructions ul {
+    padding-left: 22px;
+    text-align: left;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  /* Responsive and fixed size for different grid sizes */
+  /* We'll adjust grid container size dynamically via JS */
+  @media (max-width: 400px) {
+    #grid {
+      width: 90vw !important;
+      height: 90vw !important;
+      max-width: 400px !important;
+      max-height: 400px !important;
+    }
+    .cell {
+      font-size: 5vw !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Connect Numbers</h1>
+
+<div id="controls" aria-label="Game controls">
+  <label for="difficulty">Difficulty:</label>
+  <select id="difficulty" aria-describedby="difficulty-desc" aria-label="Select difficulty level">
+    <option value="easy">Easy (5x5, 5 numbers)</option>
+    <option value="medium" selected>Medium (6x6, 6 numbers)</option>
+    <option value="hard">Hard (7x7, 7 numbers)</option>
+  </select>
+  <button id="startBtn" aria-label="Start or restart game">Start / Restart</button>
+</div>
+
+<div id="stats" aria-live="polite">
+  <div id="score">Score: 0</div>
+  <div id="timer">Time Left: 30s</div>
+  <div id="moves">Moves: 0</div>
+</div>
+
+<div id="grid" role="grid" aria-label="Game grid"></div>
+
+<div id="message" role="alert" aria-live="assertive"></div>
+
+<div id="scoreboard" aria-label="Top scores leaderboard">
+  <h2>Top Scores</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Difficulty</th><th>Moves</th><th>Time (s)</th><th>Score</th></tr>
+    </thead>
+    <tbody id="topScoresBody">
+      <tr><td colspan="5" style="color:#666;">No scores yet. Play to record your best!</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div id="instructions" aria-label="Instructions">
+  <strong>Instructions:</strong>
+  <ul>
+    <li>Choose a difficulty level and start the game.</li>
+    <li>Hold the lowest number (1) and connect numbers in ascending order.</li>
+    <li>Connect numbers only horizontally or vertically (no diagonal moves).</li>
+    <li>You cannot unhold the grid while connecting.</li>
+    <li>Complete the sequence before the 30-second timer runs out.</li>
+    <li>The score increases by 1 point for each successful completion.</li>
+    <li>Your score depends on time taken and number of moves — fewer moves and faster time yield better scores.</li>
+  </ul>
+</div>
+
+<script>
+(() => {
+  const grid = document.getElementById('grid');
+  const message = document.getElementById('message');
+  const scoreDisplay = document.getElementById('score');
+  const timerDisplay = document.getElementById('timer');
+  const movesDisplay = document.getElementById('moves');
+  const difficultySelect = document.getElementById('difficulty');
+  const startBtn = document.getElementById('startBtn');
+  const topScoresBody = document.getElementById('topScoresBody');
+
+  let gridSize = 6; // default medium
+  let numberCount = 6;
+  let isDragging = false;
+  let expectedNumber = 1;
+  let currentPath = [];
+  let score = 0;
+  let moves = 0;
+  let timer = 30;
+  let timerInterval = null;
+  let numbersPositions = [];
+  let cells = [];
+  let gameActive = false;
+  let difficultyLabel = "Medium";
+
+  function createEmptyGrid() {
+    grid.innerHTML = '';
+    grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+    grid.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+
+    // dynamic sizing based on gridSize: max 600px, min 300px
+    // compute side length so it fits well for mobile and desktop
+    let size = 90; // vmin base
+    if (gridSize === 5) size = 90;
+    else if (gridSize === 6) size = 90;
+    else if (gridSize === 7) size = 85;
+
+    grid.style.width = size + 'vmin';
+    grid.style.height = size + 'vmin';
+    grid.style.maxWidth = '600px';
+    grid.style.maxHeight = '600px';
+
+    cells = [];
+    for (let i = 0; i < gridSize * gridSize; i++) {
+      const cell = document.createElement('div');
+      cell.classList.add('cell');
+      cell.dataset.index = i;
+      cell.setAttribute('role', 'gridcell');
+      cell.setAttribute('aria-label', 'Empty cell');
+      grid.appendChild(cell);
+      cells.push(cell);
+    }
+  }
+
+  function placeNumbers() {
+    const totalCells = gridSize * gridSize;
+    numbersPositions = [];
+
+    while (numbersPositions.length < numberCount) {
+      const pos = Math.floor(Math.random() * totalCells);
+      if (!numbersPositions.includes(pos)) numbersPositions.push(pos);
+    }
+    numbersPositions.sort((a,b) => a - b);
+
+    // Clear contents first:
+    cells.forEach(c => {
+      c.textContent = '';
+      c.setAttribute('aria-label', 'Empty cell');
+    });
+
+    for (let i = 0; i < numberCount; i++) {
+      const val = i + 1;
+      const cell = cells[numbersPositions[i]];
+      cell.textContent = val.toString();
+      cell.setAttribute('aria-label', `Number ${val}`);
+    }
+  }
+
+  function getRowCol(cell) {
+    const index = parseInt(cell.dataset.index);
+    return [Math.floor(index / gridSize), index % gridSize];
+  }
+
+  function init() {
+    // Reset states
+    createEmptyGrid();
+    placeNumbers();
+    message.textContent = '';
+    expectedNumber = 1;
+    currentPath = [];
+    moves = 0;
+    scoreDisplay.textContent = 'Score: ' + score;
+    movesDisplay.textContent = 'Moves: 0';
+    timer = 30;
+    timerDisplay.textContent = 'Time Left: 30s';
+    gameActive = true;
+    updateDifficultyInfo();
+
+    // Clear previous highlights/styles
+    cells.forEach(c => c.classList.remove('highlight', 'start'));
+
+    // Clear any existing timer interval
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    // Start countdown timer
+    timerInterval = setInterval(() => {
+      timer--;
+      timerDisplay.textContent = 'Time Left: ' + timer + 's';
+      if (timer <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        if (gameActive) {
+          gameActive = false;
+          message.textContent = '⏰ Time\'s up! Game Over.';
+          resetCurrentPath();
+        }
+      }
+    }, 1000);
+
+    startBtn.disabled = false;
+  }
+
+  // Calculates score based on time left, number of moves, and difficulty level
+  // Higher score for fewer moves and more time remaining
+  function calculateScore() {
+    // base points = difficulty multiplier * 1000
+    const difficultyMultiplier = { 'Easy': 1, 'Medium': 1.5, 'Hard': 2 }[difficultyLabel] || 1;
+    // time bonus proportional to time left
+    const timeBonus = timer * 10;
+    // move penalty (less moves better)
+    const movesPenalty = moves * 20;
+    let computedScore = Math.floor(difficultyMultiplier * (timeBonus + 1000 - movesPenalty));
+    if (computedScore < 0) computedScore = 0;
+    return computedScore;
+  }
+
+  function resetCurrentPath() {
+    currentPath.forEach(c => c.classList.remove('highlight', 'start'));
+    currentPath = [];
+    expectedNumber = 1;
+    isDragging = false;
+    moves = 0;
+    movesDisplay.textContent = 'Moves: 0';
+  }
+
+  function wrongMove() {
+    message.textContent = '❌ Wrong Move! Restarting game...';
+    gameActive = false;
+    isDragging = false;
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    setTimeout(() => {
+      init();
+    }, 1600);
+  }
+
+  function handleStart(cell) {
+    if (!gameActive) return;
+    if (!cell.classList.contains('cell')) return;
+    if (cell.textContent === '1') {
+      // start connection
+      isDragging = true;
+      moves = 0;
+      movesDisplay.textContent = 'Moves: 0';
+      cells.forEach(c => c.classList.remove('highlight', 'start'));
+      cell.classList.add('start');
+      currentPath = [cell];
+      expectedNumber = 1;
+      message.textContent = '';
+    }
+  }
+
+  function handleMove(cell) {
+    if (!gameActive) return;
+    if (!isDragging) return;
+    if (!cell.classList.contains('cell')) return;
+    const lastCell = currentPath[currentPath.length - 1];
+    if (cell === lastCell) return;
+
+    const [r1, c1] = getRowCol(lastCell);
+    const [r2, c2] = getRowCol(cell);
+    const isAdjacent = (Math.abs(r1 - r2) + Math.abs(c1 - c2)) === 1;
+    if (!isAdjacent) return;
+
+    if (currentPath.includes(cell)) return;
+
+    const valText = cell.textContent.trim();
+    const val = valText ? parseInt(valText) : NaN;
+    if (valText === '') {
+      // allow path cells without numbers
+      cell.classList.add('highlight');
+      currentPath.push(cell);
+      moves++;
+      movesDisplay.textContent = 'Moves: ' + moves;
+    } else {
+      if (val === expectedNumber + 1) {
+        cell.classList.add('highlight');
+        currentPath.push(cell);
+        expectedNumber++;
+        moves++;
+        movesDisplay.textContent = 'Moves: ' + moves;
+
+        if (expectedNumber === numberCount) {
+          // Win condition
+          gameActive = false;
+          isDragging = false;
+          clearInterval(timerInterval);
+          timerInterval = null;
+
+          score++;
+          scoreDisplay.textContent = 'Score: ' + score;
+          const finalScore = calculateScore();
+          message.textContent = `🎉 You Win! Score: ${finalScore} (Moves: ${moves}, Time left: ${timer}s)`;
+          saveTopScore(difficultyLabel, moves, timer, finalScore);
+          updateTopScoresTable();
+
+          // Restart after delay
+          setTimeout(() => {
+            init();
+          }, 2200);
+        }
+      } else {
+        wrongMove();
+      }
+    }
+  }
+
+  function handleEnd() {
+    if (!gameActive) return;
+    if (isDragging && expectedNumber < numberCount) {
+      wrongMove();
+    }
+    isDragging = false;
+  }
+
+  // Save score to localStorage top scores
+  function saveTopScore(diff, movesMade, timeLeft, finalScoreValue) {
+    let topScores = JSON.parse(localStorage.getItem('connectNumbersTopScores') || '[]');
+    topScores.push({
+      difficulty: diff,
+      moves: movesMade,
+      time: 30 - timeLeft,
+      score: finalScoreValue
+    });
+    // Sort descending by score, then moves ascending, then time ascending (lower is better)
+    topScores.sort((a,b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (a.moves !== b.moves) return a.moves - b.moves;
+      return a.time - b.time;
+    });
+    // Keep top 10 only
+    if (topScores.length > 10) topScores = topScores.slice(0, 10);
+    localStorage.setItem('connectNumbersTopScores', JSON.stringify(topScores));
+  }
+
+  function updateTopScoresTable() {
+    let topScores = JSON.parse(localStorage.getItem('connectNumbersTopScores') || '[]');
+    if (topScores.length === 0) {
+      topScoresBody.innerHTML = '<tr><td colspan="5" style="color:#666;">No scores yet. Play to record your best!</td></tr>';
+      return;
+    }
+    topScoresBody.innerHTML = '';
+    topScores.forEach((score, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td>${score.difficulty}</td>
+        <td>${score.moves}</td>
+        <td>${score.time.toFixed(1)}</td>
+        <td>${score.score}</td>
+      `;
+      topScoresBody.appendChild(tr);
+    });
+  }
+
+  // Update difficulty globals based on select value
+  function updateDifficultyInfo() {
+    const val = difficultySelect.value;
+    if (val === 'easy') {
+      gridSize = 5;
+      numberCount = 5;
+      difficultyLabel = 'Easy';
+    } else if (val === 'medium') {
+      gridSize = 6;
+      numberCount = 6;
+      difficultyLabel = 'Medium';
+    } else if (val === 'hard') {
+      gridSize = 7;
+      numberCount = 7;
+      difficultyLabel = 'Hard';
+    }
+  }
+
+  // Touch helpers: get cell under appropriate touch point
+  function getTouchCell(e) {
+    if (!e.touches || e.touches.length === 0) return null;
+    const touch = e.touches[0];
+    return document.elementFromPoint(touch.clientX, touch.clientY);
+  }
+
+  // Add event listeners
+  grid.addEventListener('mousedown', e => {
+    handleStart(e.target);
+  });
+  grid.addEventListener('mousemove', e => {
+    handleMove(e.target);
+  });
+  grid.addEventListener('mouseup', () => {
+    handleEnd();
+  });
+  grid.addEventListener('mouseleave', () => {
+    handleEnd();
+  });
+
+  grid.addEventListener('touchstart', e => {
+    const cell = getTouchCell(e);
+    if (cell) handleStart(cell);
+  }, {passive: true});
+  grid.addEventListener('touchmove', e => {
+    const cell = getTouchCell(e);
+    if (cell) handleMove(cell);
+  }, {passive: true});
+  grid.addEventListener('touchend', e => {
+    handleEnd();
+  });
+
+  startBtn.addEventListener('click', () => {
+    updateDifficultyInfo();
+    init();
+  });
+
+  // Initial setup
+  updateTopScoresTable();
+  init();
+})();
+</script>
+
+</body>
+</html>
+
+```
+
